@@ -1,6 +1,7 @@
 import os
 import glob
 import cv2
+import math
 from matplotlib import pyplot as plt
 import numpy as np
 np.seterr(divide='ignore', invalid='ignore')
@@ -88,24 +89,63 @@ def Label(x_start, y_start, n, binary_image, labeled_image):
         if(labeled_image[point] == 0 and binary_image[point] != 0):
             Label(point[0], point[1], n, binary_image, labeled_image)
 
+def erose(image, kernel_size):
+    r,c = image.shape
+    output = np.zeros((r-2,c-2))
+    kernel = np.ones((kernel_size, kernel_size))
+    a = math.floor(kernel_size /2)
+    b = math.ceil(kernel_size /2)
+
+    for x in range(1, r-1):
+        for y in range(1, c-1):
+            if(np.sum(np.multiply(image[x-a:x+b,y-a:y+b], kernel)) - image[x,y] == 8):
+                output[x-1,y-1]= 1
+
+    return output
+
+def dilote(image, kernel_size):
+    r,c = image.shape
+    output = np.zeros((r-2,c-2))
+    kernel = np.ones((kernel_size, kernel_size))
+    a = math.floor(kernel_size /2)
+    b = math.ceil(kernel_size /2)
+
+    for x in range(1, r-1):
+        for y in range(1, c-1):
+            if(np.sum(np.multiply(image[x-a:x+b,y-a:y+b], kernel)) > 0 ):
+                output[x-1,y-1]= 1
+
+    return output
+
+def open(image, kernel_size):
+    return dilote(erose(image,kernel_size), kernel_size)
+
+def close(image, kernel_size):
+    return erose(dilote(image,kernel_size), kernel_size)
+
 for image_file in read_all_image_files():
     print("Objects are counting for image: " + image_file)
 
     grayscale_image = get_grayscale_image(image_file)
-    plt.imshow(grayscale_image)
+    '''plt.imshow(grayscale_image)
     plt.show()
-    print(grayscale_image.shape)
+    print(grayscale_image.shape)'''
+
+
     clustersPoints=[50,250]
     binary_image =Kmeans(grayscale_image,clustersPoints)
     print("K-Means applied to: " + image_file)
-    plt.imshow(binary_image)
-    plt.show()
+    '''plt.imshow(binary_image)
+    plt.show()'''
 
-    labeled_image = ConnectedComponents(binary_image)
+    opened_image = open(binary_image, 3)
+    '''plt.imshow(opened_image)
+    plt.show()'''
+
+
+
+    labeled_image = ConnectedComponents(opened_image)
     print("Image labeled: " + image_file)
-    print("There are ", labeled_image.max(), "objects")
+    print("There are ", labeled_image.max(), "birds")
     plt.imshow(labeled_image)
     plt.show()
-
-
-    #h = calculateHistogram(grayscale_image)
