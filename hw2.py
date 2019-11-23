@@ -139,6 +139,7 @@ for image_file in read_all_image_files():
     plt.show()'''
 
     opened_image = open(binary_image, 3)
+    print("Opening applied to: " + image_file)
     '''plt.imshow(opened_image)
     plt.show()'''
 
